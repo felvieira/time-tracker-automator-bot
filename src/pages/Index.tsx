@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import ProjectsList from "@/components/ProjectsList";
 import TimeTracker from "@/components/TimeTracker";
 import TimeEntries from "@/components/TimeEntries";
+import TimeEntriesCalendar from "@/components/TimeEntriesCalendar";
 import { CLOCKIFY_CONFIG } from "@/config/clockify";
 
 interface Client {
@@ -332,7 +333,7 @@ const Index = () => {
             </TabsTrigger>
             <TabsTrigger value="entries" className="flex items-center gap-2">
               <BarChart3 size={16} />
-              Relatórios
+              Entradas
             </TabsTrigger>
           </TabsList>
 
@@ -509,7 +510,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="entries">
-            <TimeEntries 
+            <TimeEntriesCalendar 
               apiKey={CLOCKIFY_CONFIG.API_KEY}
               baseUrl={CLOCKIFY_CONFIG.BASE_URL}
               projectsData={projectsData}
