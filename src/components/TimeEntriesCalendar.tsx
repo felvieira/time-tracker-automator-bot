@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,23 @@ const TimeEntriesCalendar = ({ apiKey, baseUrl, projectsData }: TimeEntriesCalen
       }
 
       const entries = await response.json();
-      setTimeEntries(entries);
+      
+      // Enriquecer as entradas com informações dos projetos
+      const enrichedEntries = entries.map((entry: TimeEntry) => {
+        const project = findProjectById(entry.projectId);
+        return {
+          ...entry,
+          project: project ? {
+            name: project.name,
+            color: project.color,
+            client: {
+              name: project.client.name
+            }
+          } : undefined
+        };
+      });
+      
+      setTimeEntries(enrichedEntries);
 
     } catch (error) {
       console.error('Erro ao carregar entradas:', error);
@@ -113,6 +128,14 @@ const TimeEntriesCalendar = ({ apiKey, baseUrl, projectsData }: TimeEntriesCalen
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const findProjectById = (projectId: string): Project | undefined => {
+    for (const projectData of projectsData) {
+      const project = projectData.projects.find(p => p.id === projectId);
+      if (project) return project;
+    }
+    return undefined;
   };
 
   const getCurrentUser = async () => {
@@ -326,21 +349,26 @@ const TimeEntriesCalendar = ({ apiKey, baseUrl, projectsData }: TimeEntriesCalen
             <>
               <div className="space-y-3">
                 {selectedDateEntries.map((entry) => (
-                  <div key={entry.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                  <div key={entry.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-2">
                           <div 
-                            className="w-3 h-3 rounded-full" 
+                            className="w-3 h-3 rounded-full flex-shrink-0" 
                             style={{ backgroundColor: entry.project?.color || '#666' }}
                           />
-                          <span className="text-sm font-medium text-gray-900">
-                            {entry.project?.client?.name} - {entry.project?.name}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-gray-900">
+                              {entry.project?.client?.name || 'Cliente não identificado'}
+                            </span>
+                            <span className="text-xs text-gray-600">
+                              {entry.project?.name || 'Projeto não identificado'}
+                            </span>
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-700 mb-1">{entry.description}</p>
-                        <div className="flex items-center gap-3 text-xs text-gray-600">
-                          <span>{formatDuration(entry.timeInterval.duration)}</span>
+                        <p className="text-sm text-gray-700 mb-2 ml-5">{entry.description}</p>
+                        <div className="flex items-center gap-3 text-xs text-gray-600 ml-5">
+                          <span className="font-medium">{formatDuration(entry.timeInterval.duration)}</span>
                           {entry.billable && (
                             <Badge variant="secondary" className="text-xs">
                               Faturável
