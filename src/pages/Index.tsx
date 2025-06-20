@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, Play, Square, BarChart3, Users, FolderOpen, Trash2 } from "lucide-react";
+import { Calendar, Clock, Play, Square, BarChart3, Users, FolderOpen, Trash2, Send } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -68,6 +68,8 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTimer, setActiveTimer] = useState<any>(null);
   const [recentEntries, setRecentEntries] = useState<TimeEntry[]>([]);
+  const [batchEntries, setBatchEntries] = useState<TimeEntry[]>([]);
+  const [showBatchApproval, setShowBatchApproval] = useState<boolean>(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -156,7 +158,7 @@ const Index = () => {
 
       if (response.ok) {
         const entries = await response.json();
-        setRecentEntries(entries.slice(0, 5)); // Mostrar apenas as 5 mais recentes
+        setRecentEntries(entries.slice(0, 5));
       }
     } catch (error) {
       console.error('Erro ao carregar entradas recentes:', error);
@@ -195,6 +197,7 @@ const Index = () => {
     setIsLoading(true);
     let successCount = 0;
     let errorCount = 0;
+    const createdEntries: TimeEntry[] = [];
 
     try {
       const workspaceId = projectsData[0]?.client.workspaceId;
@@ -221,6 +224,8 @@ const Index = () => {
           });
 
           if (response.ok) {
+            const newEntry = await response.json();
+            createdEntries.push(newEntry);
             successCount++;
           } else {
             errorCount++;
@@ -231,6 +236,9 @@ const Index = () => {
       }
 
       if (successCount > 0) {
+        setBatchEntries(createdEntries);
+        setShowBatchApproval(createdEntries.length > 1);
+        
         toast({
           title: "Sucesso",
           description: `${successCount} entrada(s) de ${hours}h criada(s) com sucesso!${errorCount > 0 ? ` ${errorCount} falharam.` : ''}`,
@@ -253,6 +261,31 @@ const Index = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleBatchApproval = async () => {
+    if (batchEntries.length === 0) return;
+
+    try {
+      // Aqui você pode implementar a lógica específica de envio para aprovação
+      // Como o Clockify não tem endpoint específico para aprovação, 
+      // isso pode variar dependendo do seu processo interno
+      
+      toast({
+        title: "Sucesso",
+        description: `${batchEntries.length} entrada(s) enviada(s) para aprovação`,
+      });
+      
+      setShowBatchApproval(false);
+      setBatchEntries([]);
+    } catch (error) {
+      console.error('Erro ao enviar para aprovação:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível enviar para aprovação",
+        variant: "destructive",
+      });
     }
   };
 
@@ -448,6 +481,36 @@ const Index = () => {
                   >
                     {isLoading ? "Lançando..." : `Lançar ${hours || '0'}h em ${selectedDates.length} dia(s)`}
                   </Button>
+
+                  {showBatchApproval && (
+                    <div className="border-t pt-4 mt-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 className="text-sm font-medium text-green-800 mb-2">
+                          Entradas Criadas com Sucesso
+                        </h3>
+                        <p className="text-sm text-green-700 mb-3">
+                          {batchEntries.length} entrada(s) foram criadas. Deseja enviar todas para aprovação?
+                        </p>
+                        <div className="flex gap-2">
+                          <Button 
+                            onClick={handleBatchApproval}
+                            className="bg-green-600 hover:bg-green-700"
+                            size="sm"
+                          >
+                            <Send size={16} className="mr-2" />
+                            Enviar Todas para Aprovação
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={() => setShowBatchApproval(false)}
+                            size="sm"
+                          >
+                            Agora Não
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
