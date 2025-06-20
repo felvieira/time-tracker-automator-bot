@@ -7,8 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Calendar, Clock, Play, Square, BarChart3, Users, FolderOpen } from "lucide-react";
+import { Calendar, Clock, Play, Square, BarChart3, Users, FolderOpen, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Badge } from "@/components/ui/badge";
 import ProjectsList from "@/components/ProjectsList";
 import TimeTracker from "@/components/TimeTracker";
 import TimeEntries from "@/components/TimeEntries";
@@ -36,14 +39,34 @@ interface ProjectData {
   projects: Project[];
 }
 
+interface TimeEntry {
+  id: string;
+  description: string;
+  timeInterval: {
+    start: string;
+    end: string;
+    duration: string;
+  };
+  projectId: string;
+  project?: {
+    name: string;
+    color: string;
+    client?: {
+      name: string;
+    };
+  };
+  billable: boolean;
+}
+
 const Index = () => {
   const [projectsData, setProjectsData] = useState<ProjectData[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [description, setDescription] = useState<string>('');
   const [hours, setHours] = useState<string>('');
-  const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [selectedDates, setSelectedDates] = useState<Date[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [activeTimer, setActiveTimer] = useState<any>(null);
+  const [recentEntries, setRecentEntries] = useState<TimeEntry[]>([]);
   const { toast } = useToast();
 
   const API_KEY = 'ZmU5NzVlMDMtNDkzMC00ZDJhLTk1MjUtY2U2MzM4NTU1NTM2';
@@ -51,6 +74,7 @@ const Index = () => {
 
   useEffect(() => {
     loadProjects();
+    loadRecentEntries();
   }, []);
 
   const loadProjects = async () => {
@@ -112,59 +136,176 @@ const Index = () => {
     }
   };
 
-  const handleCreateTimeEntry = async () => {
-    if (!selectedProject || !description || !hours) {
+  const loadRecentEntries = async () => {
+    try {
+      const workspaceId = projectsData[0]?.client.workspaceId || '64b7e41ccb0d3130ab16fd10';
+      const userId = await getCurrentUser();
+      
+      if (!userId) return;
+
+      const today = new Date();
+      const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      const response = await fetch(
+        `${BASE_URL}/workspaces/${workspaceId}/user/${userId}/time-entries?start=${lastWeek.toISOString()}&end=${today.toISOString()}`,
+        {
+          headers: {
+            'X-Api-Key': API_KEY,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const entries = await response.json();
+        setRecentEntries(entries.slice(0, 5)); // Mostrar apenas as 5 mais recentes
+      }
+    } catch (error) {
+      console.error('Erro ao carregar entradas recentes:', error);
+    }
+  };
+
+  const getCurrentUser = async () => {
+    try {
+      const response = await fetch(`${BASE_URL}/user`, {
+        headers: {
+          'X-Api-Key': API_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const user = await response.json();
+        return user.id;
+      }
+    } catch (error) {
+      console.error('Erro ao obter usuário:', error);
+    }
+    return null;
+  };
+
+  const handleCreateTimeEntries = async () => {
+    if (!selectedProject || !description || !hours || selectedDates.length === 0) {
       toast({
         title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
+        description: "Preencha todos os campos e selecione pelo menos uma data",
         variant: "destructive",
       });
       return;
     }
 
     setIsLoading(true);
+    let successCount = 0;
+    let errorCount = 0;
+
     try {
       const workspaceId = projectsData[0]?.client.workspaceId;
-      const startTime = new Date(`${date}T09:00:00.000Z`).toISOString();
-      const endTime = new Date(new Date(`${date}T09:00:00.000Z`).getTime() + parseFloat(hours) * 60 * 60 * 1000).toISOString();
+      
+      for (const date of selectedDates) {
+        try {
+          const startTime = new Date(date);
+          startTime.setHours(9, 0, 0, 0);
+          const endTime = new Date(startTime.getTime() + parseFloat(hours) * 60 * 60 * 1000);
 
-      const response = await fetch(`${BASE_URL}/workspaces/${workspaceId}/time-entries`, {
-        method: 'POST',
-        headers: {
-          'X-Api-Key': API_KEY,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          start: startTime,
-          end: endTime,
-          projectId: selectedProject,
-          description: description,
-          billable: true,
-        }),
-      });
+          const response = await fetch(`${BASE_URL}/workspaces/${workspaceId}/time-entries`, {
+            method: 'POST',
+            headers: {
+              'X-Api-Key': API_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              start: startTime.toISOString(),
+              end: endTime.toISOString(),
+              projectId: selectedProject,
+              description: description,
+              billable: true,
+            }),
+          });
 
-      if (!response.ok) {
-        throw new Error('Erro ao criar entrada de tempo');
+          if (response.ok) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
+        } catch (error) {
+          errorCount++;
+        }
       }
 
-      toast({
-        title: "Sucesso",
-        description: `Entrada de ${hours}h criada com sucesso!`,
-      });
+      if (successCount > 0) {
+        toast({
+          title: "Sucesso",
+          description: `${successCount} entrada(s) de ${hours}h criada(s) com sucesso!${errorCount > 0 ? ` ${errorCount} falharam.` : ''}`,
+        });
 
-      // Limpar formulário
-      setDescription('');
-      setHours('');
+        // Limpar formulário
+        setDescription('');
+        setHours('');
+        setSelectedDates([]);
+        loadRecentEntries();
+      } else {
+        throw new Error('Todas as entradas falharam');
+      }
     } catch (error) {
-      console.error('Erro ao criar entrada:', error);
+      console.error('Erro ao criar entradas:', error);
       toast({
         title: "Erro",
-        description: "Não foi possível criar a entrada de tempo",
+        description: "Não foi possível criar as entradas de tempo",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const deleteTimeEntry = async (entryId: string) => {
+    try {
+      const workspaceId = projectsData[0]?.client.workspaceId || '64b7e41ccb0d3130ab16fd10';
+      const response = await fetch(`${BASE_URL}/workspaces/${workspaceId}/time-entries/${entryId}`, {
+        method: 'DELETE',
+        headers: {
+          'X-Api-Key': API_KEY,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Sucesso",
+          description: "Entrada de tempo excluída com sucesso",
+        });
+        loadRecentEntries();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir entrada:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível excluir a entrada de tempo",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatDuration = (duration: string): string => {
+    const hours = duration.match(/(\d+)H/);
+    const minutes = duration.match(/(\d+)M/);
+    let totalHours = 0;
+    if (hours) totalHours += parseInt(hours[1]);
+    if (minutes) totalHours += parseInt(minutes[1]) / 60;
+    return `${totalHours.toFixed(1)}h`;
+  };
+
+  const formatDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+  };
+
+  const removeDateFromSelection = (dateToRemove: Date) => {
+    setSelectedDates(selectedDates.filter(date => 
+      date.toDateString() !== dateToRemove.toDateString()
+    ));
   };
 
   return (
@@ -207,18 +348,18 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="manual">
-            <Card className="bg-white shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="text-blue-600" size={24} />
-                  Lançamento Manual de Horas
-                </CardTitle>
-                <CardDescription>
-                  Registre suas horas trabalhadas manualmente
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card className="bg-white shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="text-blue-600" size={24} />
+                    Lançamento em Lote
+                  </CardTitle>
+                  <CardDescription>
+                    Selecione múltiplos dias e lance horas em todos de uma vez
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
                   <div className="space-y-2">
                     <Label htmlFor="project">Projeto *</Label>
                     <Select value={selectedProject} onValueChange={setSelectedProject}>
@@ -238,51 +379,132 @@ const Index = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="date">Data</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={date}
-                      onChange={(e) => setDate(e.target.value)}
+                    <Label>Datas Selecionadas</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="w-full justify-start">
+                          <Calendar size={16} className="mr-2" />
+                          {selectedDates.length > 0 
+                            ? `${selectedDates.length} dia(s) selecionado(s)`
+                            : "Selecionar datas"
+                          }
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="multiple"
+                          selected={selectedDates}
+                          onSelect={(dates) => setSelectedDates(dates || [])}
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    
+                    {selectedDates.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {selectedDates.map((date, index) => (
+                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                            {date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            <button
+                              onClick={() => removeDateFromSelection(date)}
+                              className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                            >
+                              ×
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição da Atividade *</Label>
+                    <Textarea
+                      id="description"
+                      placeholder="Descreva as atividades realizadas..."
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      rows={3}
                     />
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição da Atividade *</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Descreva as atividades realizadas..."
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={3}
-                  />
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="hours">Horas por Dia *</Label>
+                    <Input
+                      id="hours"
+                      type="number"
+                      step="0.25"
+                      min="0.25"
+                      max="24"
+                      placeholder="Ex: 8.0"
+                      value={hours}
+                      onChange={(e) => setHours(e.target.value)}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="hours">Horas Trabalhadas *</Label>
-                  <Input
-                    id="hours"
-                    type="number"
-                    step="0.25"
-                    min="0.25"
-                    max="24"
-                    placeholder="Ex: 8.5"
-                    value={hours}
-                    onChange={(e) => setHours(e.target.value)}
-                  />
-                </div>
+                  <Button 
+                    onClick={handleCreateTimeEntries}
+                    disabled={isLoading}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                  >
+                    {isLoading ? "Lançando..." : `Lançar ${hours || '0'}h em ${selectedDates.length} dia(s)`}
+                  </Button>
+                </CardContent>
+              </Card>
 
-                <Button 
-                  onClick={handleCreateTimeEntry}
-                  disabled={isLoading}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  size="lg"
-                >
-                  {isLoading ? "Criando..." : "Lançar Horas"}
-                </Button>
-              </CardContent>
-            </Card>
+              <Card className="bg-white shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="text-purple-600" size={24} />
+                    Entradas Recentes
+                  </CardTitle>
+                  <CardDescription>
+                    Suas últimas entradas de tempo
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {recentEntries.length === 0 ? (
+                      <p className="text-center text-gray-500 py-4">
+                        Nenhuma entrada recente encontrada
+                      </p>
+                    ) : (
+                      recentEntries.map((entry) => (
+                        <div key={entry.id} className="border rounded-lg p-3 hover:bg-gray-50 transition-colors">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <div 
+                                  className="w-3 h-3 rounded-full" 
+                                  style={{ backgroundColor: entry.project?.color || '#666' }}
+                                />
+                                <span className="text-sm font-medium text-gray-900">
+                                  {entry.project?.client?.name} - {entry.project?.name}
+                                </span>
+                              </div>
+                              <p className="text-sm text-gray-700 mb-1">{entry.description}</p>
+                              <div className="flex items-center gap-3 text-xs text-gray-600">
+                                <span>{formatDate(entry.timeInterval.start)}</span>
+                                <span>{formatDuration(entry.timeInterval.duration)}</span>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => deleteTimeEntry(entry.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 p-1"
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="projects">
