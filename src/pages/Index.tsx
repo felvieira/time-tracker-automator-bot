@@ -15,7 +15,8 @@ import ProjectsList from "@/components/ProjectsList";
 import TimeTracker from "@/components/TimeTracker";
 import TimeEntries from "@/components/TimeEntries";
 import TimeEntriesCalendar from "@/components/TimeEntriesCalendar";
-import { CLOCKIFY_CONFIG } from "@/config/clockify";
+import { CLOCKIFY_CONFIG, getClockifyConfig } from "@/config/clockify";
+import ConfigDialog from "@/components/ConfigDialog";
 
 interface Client {
   id: string;
@@ -70,19 +71,38 @@ const Index = () => {
   const [recentEntries, setRecentEntries] = useState<TimeEntry[]>([]);
   const [batchEntries, setBatchEntries] = useState<TimeEntry[]>([]);
   const [showBatchApproval, setShowBatchApproval] = useState<boolean>(false);
+  const [currentConfig, setCurrentConfig] = useState(CLOCKIFY_CONFIG);
   const { toast } = useToast();
 
   useEffect(() => {
     loadProjects();
     loadRecentEntries();
+    
+    // Escutar mudanças na configuração
+    const handleConfigUpdate = () => {
+      const newConfig = getClockifyConfig();
+      setCurrentConfig(newConfig);
+      // Recarregar dados com nova configuração
+      setTimeout(() => {
+        loadProjects();
+        loadRecentEntries();
+      }, 100);
+    };
+
+    window.addEventListener('clockify-config-updated', handleConfigUpdate);
+    
+    return () => {
+      window.removeEventListener('clockify-config-updated', handleConfigUpdate);
+    };
   }, []);
 
   const loadProjects = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${CLOCKIFY_CONFIG.BASE_URL}/workspaces`, {
+      const config = getClockifyConfig();
+      const response = await fetch(`${config.BASE_URL}/workspaces`, {
         headers: {
-          'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+          'X-Api-Key': config.API_KEY,
           'Content-Type': 'application/json',
         },
       });
@@ -95,9 +115,9 @@ const Index = () => {
       const workspaceId = workspaces[0]?.id;
 
       if (workspaceId) {
-        const projectsResponse = await fetch(`${CLOCKIFY_CONFIG.BASE_URL}/workspaces/${workspaceId}/projects`, {
+        const projectsResponse = await fetch(`${config.BASE_URL}/workspaces/${workspaceId}/projects`, {
           headers: {
-            'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+            'X-Api-Key': config.API_KEY,
             'Content-Type': 'application/json',
           },
         });
@@ -138,7 +158,8 @@ const Index = () => {
 
   const loadRecentEntries = async () => {
     try {
-      const workspaceId = projectsData[0]?.client.workspaceId || CLOCKIFY_CONFIG.WORKSPACE_ID;
+      const config = getClockifyConfig();
+      const workspaceId = projectsData[0]?.client.workspaceId || config.WORKSPACE_ID;
       const userId = await getCurrentUser();
       
       if (!userId) return;
@@ -147,10 +168,10 @@ const Index = () => {
       const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
 
       const response = await fetch(
-        `${CLOCKIFY_CONFIG.BASE_URL}/workspaces/${workspaceId}/user/${userId}/time-entries?start=${lastWeek.toISOString()}&end=${today.toISOString()}`,
+        `${config.BASE_URL}/workspaces/${workspaceId}/user/${userId}/time-entries?start=${lastWeek.toISOString()}&end=${today.toISOString()}`,
         {
           headers: {
-            'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+            'X-Api-Key': config.API_KEY,
             'Content-Type': 'application/json',
           },
         }
@@ -167,9 +188,10 @@ const Index = () => {
 
   const getCurrentUser = async () => {
     try {
-      const response = await fetch(`${CLOCKIFY_CONFIG.BASE_URL}/user`, {
+      const config = getClockifyConfig();
+      const response = await fetch(`${config.BASE_URL}/user`, {
         headers: {
-          'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+          'X-Api-Key': config.API_KEY,
           'Content-Type': 'application/json',
         },
       });
@@ -200,6 +222,7 @@ const Index = () => {
     const createdEntries: TimeEntry[] = [];
 
     try {
+      const config = getClockifyConfig();
       const workspaceId = projectsData[0]?.client.workspaceId;
       
       for (const date of selectedDates) {
@@ -208,10 +231,10 @@ const Index = () => {
           startTime.setHours(9, 0, 0, 0);
           const endTime = new Date(startTime.getTime() + parseFloat(hours) * 60 * 60 * 1000);
 
-          const response = await fetch(`${CLOCKIFY_CONFIG.BASE_URL}/workspaces/${workspaceId}/time-entries`, {
+          const response = await fetch(`${config.BASE_URL}/workspaces/${workspaceId}/time-entries`, {
             method: 'POST',
             headers: {
-              'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+              'X-Api-Key': config.API_KEY,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
@@ -291,11 +314,12 @@ const Index = () => {
 
   const deleteTimeEntry = async (entryId: string) => {
     try {
-      const workspaceId = projectsData[0]?.client.workspaceId || CLOCKIFY_CONFIG.WORKSPACE_ID;
-      const response = await fetch(`${CLOCKIFY_CONFIG.BASE_URL}/workspaces/${workspaceId}/time-entries/${entryId}`, {
+      const config = getClockifyConfig();
+      const workspaceId = projectsData[0]?.client.workspaceId || config.WORKSPACE_ID;
+      const response = await fetch(`${config.BASE_URL}/workspaces/${workspaceId}/time-entries/${entryId}`, {
         method: 'DELETE',
         headers: {
-          'X-Api-Key': CLOCKIFY_CONFIG.API_KEY,
+          'X-Api-Key': config.API_KEY,
           'Content-Type': 'application/json',
         },
       });
@@ -343,10 +367,11 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 mb-2">
             <Clock className="text-blue-600" size={40} />
-            Clockify Automator
-          </h1>
+            <h1 className="text-4xl font-bold text-gray-900">Clockify Automator</h1>
+            <ConfigDialog />
+          </div>
           <p className="text-xl text-gray-600">Automatize o lançamento de horas no Clockify</p>
         </div>
 
@@ -373,8 +398,8 @@ const Index = () => {
           <TabsContent value="tracker">
             <TimeTracker 
               projectsData={projectsData}
-              apiKey={CLOCKIFY_CONFIG.API_KEY}
-              baseUrl={CLOCKIFY_CONFIG.BASE_URL}
+              apiKey={currentConfig.API_KEY}
+              baseUrl={currentConfig.BASE_URL}
             />
           </TabsContent>
 
@@ -574,8 +599,8 @@ const Index = () => {
 
           <TabsContent value="entries">
             <TimeEntriesCalendar 
-              apiKey={CLOCKIFY_CONFIG.API_KEY}
-              baseUrl={CLOCKIFY_CONFIG.BASE_URL}
+              apiKey={currentConfig.API_KEY}
+              baseUrl={currentConfig.BASE_URL}
               projectsData={projectsData}
             />
           </TabsContent>
