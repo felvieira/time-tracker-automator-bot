@@ -156,6 +156,14 @@ const Index = () => {
     }
   };
 
+  const findProjectById = (projectId: string): Project | undefined => {
+    for (const projectData of projectsData) {
+      const project = projectData.projects.find(p => p.id === projectId);
+      if (project) return project;
+    }
+    return undefined;
+  };
+
   const loadRecentEntries = async () => {
     try {
       const config = getClockifyConfig();
@@ -179,7 +187,23 @@ const Index = () => {
 
       if (response.ok) {
         const entries = await response.json();
-        setRecentEntries(entries.slice(0, 5));
+        
+        // Enriquecer as entradas com informações dos projetos
+        const enrichedEntries = entries.map((entry: TimeEntry) => {
+          const project = findProjectById(entry.projectId);
+          return {
+            ...entry,
+            project: project ? {
+              name: project.name,
+              color: project.color,
+              client: project.client ? {
+                name: project.client.name
+              } : undefined
+            } : undefined
+          };
+        });
+        
+        setRecentEntries(enrichedEntries.slice(0, 5));
       }
     } catch (error) {
       console.error('Erro ao carregar entradas recentes:', error);
@@ -223,7 +247,7 @@ const Index = () => {
 
     try {
       const config = getClockifyConfig();
-      const workspaceId = projectsData[0]?.client.workspaceId;
+      const workspaceId = projectsData[0]?.client.workspaceId || config.WORKSPACE_ID;
       
       for (const date of selectedDates) {
         try {
@@ -562,17 +586,27 @@ const Index = () => {
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
                                 <div 
-                                  className="w-3 h-3 rounded-full" 
+                                  className="w-3 h-3 rounded-full flex-shrink-0" 
                                   style={{ backgroundColor: entry.project?.color || '#666' }}
                                 />
-                                <span className="text-sm font-medium text-gray-900">
-                                  {entry.project?.client?.name} - {entry.project?.name}
-                                </span>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-semibold text-gray-900">
+                                    {entry.project?.client?.name || 'Cliente não identificado'}
+                                  </span>
+                                  <span className="text-xs text-gray-600">
+                                    {entry.project?.name || 'Projeto não identificado'}
+                                  </span>
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-700 mb-1">{entry.description}</p>
-                              <div className="flex items-center gap-3 text-xs text-gray-600">
+                              <p className="text-sm text-gray-700 mb-1 ml-5">{entry.description}</p>
+                              <div className="flex items-center gap-3 text-xs text-gray-600 ml-5">
                                 <span>{formatDate(entry.timeInterval.start)}</span>
-                                <span>{formatDuration(entry.timeInterval.duration)}</span>
+                                <span className="font-medium">{formatDuration(entry.timeInterval.duration)}</span>
+                                {entry.billable && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Faturável
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                             <Button
