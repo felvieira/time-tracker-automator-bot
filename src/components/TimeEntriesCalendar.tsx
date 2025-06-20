@@ -109,9 +109,9 @@ const TimeEntriesCalendar = ({ apiKey, baseUrl, projectsData }: TimeEntriesCalen
           project: project ? {
             name: project.name,
             color: project.color,
-            client: {
+            client: project.client ? {
               name: project.client.name
-            }
+            } : undefined
           } : undefined
         };
       });
