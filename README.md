@@ -1,73 +1,202 @@
-# Welcome to your Lovable project
+# 🕒 Clockify Automator
 
-## Project info
+Uma interface web moderna e intuitiva para automatizar o lançamento de horas no Clockify, desenvolvida com React, TypeScript e shadcn/ui.
 
-**URL**: https://lovable.dev/projects/131d40e5-690c-45ff-a021-d2a8942e0e24
+![Clockify Automator](https://img.shields.io/badge/Clockify-Automator-blue?style=for-the-badge&logo=clockify)
+![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-3178C6?style=for-the-badge&logo=typescript)
+![Vite](https://img.shields.io/badge/Vite-5.4.1-646CFF?style=for-the-badge&logo=vite)
 
-## How can I edit this code?
+## 🎬 Demonstração
 
-There are several ways of editing your application.
+![Clockify Automator Demo](./public/videos/builderio-final-2-editado.gif)
 
-**Use Lovable**
+> 📹 **[Assista ao vídeo completo da demonstração](./public/videos/builderio-final-2-editado.mp4)**
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/131d40e5-690c-45ff-a021-d2a8942e0e24) and start prompting.
+## ✨ Funcionalidades
 
-Changes made via Lovable will be committed automatically to this repo.
+### 🎯 Timer em Tempo Real
+- Controle de tempo com start/stop em tempo real
+- Interface intuitiva com cronômetro visual
+- Seleção de projeto e descrição da atividade
 
-**Use your preferred IDE**
+### 📅 Lançamento Manual em Lote
+- Criação de entradas para múltiplos dias simultaneamente
+- Seletor de calendário para escolha de datas
+- Configuração de horas por dia
+- Aprovação em lote das entradas criadas
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 📊 Gestão de Projetos
+- Visualização organizada por cliente
+- Lista completa de projetos disponíveis
+- Indicadores visuais de projetos faturáveis
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 📈 Relatórios e Análises
+- Visualização de entradas de tempo por período
+- Cálculo automático de total de horas
+- Filtros por data inicial e final
+- Exclusão de entradas diretamente da interface
 
-Follow these steps:
+### ⚙️ Configuração Flexível
+- Interface para configuração de API keys
+- Suporte a variáveis de ambiente
+- Configuração persistente no localStorage
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🚀 Começando
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### Pré-requisitos
 
-# Step 3: Install the necessary dependencies.
-npm i
+- Node.js 18+ 
+- npm, yarn ou pnpm
+- Conta no [Clockify](https://clockify.me) com API key
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Instalação
+
+1. **Clone o repositório**
+   ```bash
+   git clone https://github.com/your-username/clockify-automator.git
+   cd clockify-automator
+   ```
+
+2. **Instale as dependências**
+   ```bash
+   npm install
+   # ou
+   yarn install
+   # ou
+   pnpm install
+   ```
+
+3. **Configure as variáveis de ambiente**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Edite o arquivo `.env` com suas configurações:
+   ```env
+   # Obtenha sua API key em: https://clockify.me/user/settings
+   VITE_CLOCKIFY_API_KEY=sua_api_key_aqui
+   
+   # Opcional: IDs pré-configurados (podem ser configurados via interface)
+   VITE_CLOCKIFY_WORKSPACE_ID=
+   VITE_CLOCKIFY_CLIENT_ID=
+   VITE_CLOCKIFY_PROJECT_ID=
+   ```
+
+4. **Execute o projeto**
+   ```bash
+   npm run dev
+   # ou
+   yarn dev
+   # ou
+   pnpm dev
+   ```
+
+5. **Acesse a aplicação**
+   
+   Abra [http://localhost:5173](http://localhost:5173) no seu navegador.
+
+## 🔧 Configuração
+
+### Obtendo sua API Key do Clockify
+
+1. Acesse [Clockify](https://clockify.me) e faça login
+2. Vá para **User Settings** → **API**
+3. Copie sua **API Key**
+4. Cole no arquivo `.env` ou configure via interface da aplicação
+
+### Configuração via Interface
+
+Se preferir não usar variáveis de ambiente, você pode configurar tudo diretamente na aplicação:
+
+1. Clique no botão **"Configurações"** no canto superior direito
+2. Insira sua API Key do Clockify
+3. Os demais campos são opcionais e podem ser deixados em branco
+4. Clique em **"Salvar"**
+
+## 🏗️ Build para Produção
+
+```bash
+npm run build
+# ou
+yarn build
+# ou
+pnpm build
 ```
 
-**Edit a file directly in GitHub**
+Os arquivos de produção serão gerados na pasta `dist/`.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🛠️ Stack Tecnológica
 
-**Use GitHub Codespaces**
+- **Frontend Framework**: React 18.3.1
+- **Language**: TypeScript 5.5.3
+- **Build Tool**: Vite 5.4.1
+- **UI Components**: shadcn/ui + Radix UI
+- **Styling**: Tailwind CSS
+- **State Management**: React Query (TanStack Query)
+- **Routing**: React Router DOM
+- **Icons**: Lucide React
+- **Date Handling**: date-fns
+- **Form Handling**: React Hook Form + Zod
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📁 Estrutura do Projeto
 
-## What technologies are used for this project?
+```
+clockify-automator/
+├── public/                 # Arquivos estáticos
+├── src/
+│   ├── components/        # Componentes React
+│   │   ├── ui/           # Componentes base (shadcn/ui)
+│   │   ├── ConfigDialog.tsx
+│   │   ├── ProjectsList.tsx
+│   │   ├── TimeTracker.tsx
+│   │   └── ...
+│   ├── config/           # Configurações
+│   │   └── clockify.ts   # Config da API Clockify
+│   ├── hooks/            # Custom hooks
+│   ├── pages/            # Páginas da aplicação
+│   ├── lib/              # Utilitários
+│   └── main.tsx          # Entry point
+├── .env.example          # Exemplo de variáveis de ambiente
+├── package.json
+└── README.md
+```
 
-This project is built with:
+## 🤝 Contribuindo
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+Contribuições são sempre bem-vindas! Para contribuir:
 
-## How can I deploy this project?
+1. **Fork** o projeto
+2. Crie uma **branch** para sua feature (`git checkout -b feature/AmazingFeature`)
+3. **Commit** suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. **Push** para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um **Pull Request**
 
-Simply open [Lovable](https://lovable.dev/projects/131d40e5-690c-45ff-a021-d2a8942e0e24) and click on Share -> Publish.
+### Diretrizes de Contribuição
 
-## Can I connect a custom domain to my Lovable project?
+- Mantenha o código limpo e bem documentado
+- Siga os padrões de código existentes
+- Adicione testes quando apropriado
+- Atualize a documentação se necessário
 
-Yes, you can!
+## 📝 Licença
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+## 🙏 Agradecimentos
+
+- [Clockify](https://clockify.me) pela excelente API
+- [shadcn/ui](https://ui.shadcn.com) pelos componentes UI
+- [Lucide](https://lucide.dev) pelos ícones
+- Comunidade React e TypeScript
+
+## 📞 Suporte
+
+Se você encontrar algum problema ou tiver sugestões:
+
+- Abra uma [Issue](https://github.com/your-username/clockify-automator/issues)
+- Entre em contato via [Discussions](https://github.com/your-username/clockify-automator/discussions)
+
+---
+
+**Feito com ❤️ para a comunidade de desenvolvedores**

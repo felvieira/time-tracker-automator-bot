@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="clockGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1E40AF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Clock face -->
+  <circle cx="50" cy="50" r="45" fill="url(#clockGradient)" stroke="#1E40AF" stroke-width="2"/>
+  <circle cx="50" cy="50" r="40" fill="white" stroke="#E5E7EB" stroke-width="1"/>
+  
+  <!-- Hour markers -->
+  <g stroke="#374151" stroke-width="2">
+    <line x1="50" y1="15" x2="50" y2="20" />
+    <line x1="85" y1="50" x2="80" y2="50" />
+    <line x1="50" y1="85" x2="50" y2="80" />
+    <line x1="15" y1="50" x2="20" y2="50" />
+  </g>
+  
+  <!-- Smaller hour markers -->
+  <g stroke="#9CA3AF" stroke-width="1">
+    <line x1="73.66" y1="26.34" x2="71.21" y2="28.79" />
+    <line x1="73.66" y1="73.66" x2="71.21" y2="71.21" />
+    <line x1="26.34" y1="73.66" x2="28.79" y2="71.21" />
+    <line x1="26.34" y1="26.34" x2="28.79" y2="28.79" />
+  </g>
+  
+  <!-- Clock hands -->
+  <!-- Hour hand pointing to 3 -->
+  <line x1="50" y1="50" x2="65" y2="50" stroke="#1F2937" stroke-width="3" stroke-linecap="round"/>
+  <!-- Minute hand pointing to 12 -->
+  <line x1="50" y1="50" x2="50" y2="25" stroke="#1F2937" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Center dot -->
+  <circle cx="50" cy="50" r="3" fill="#1F2937"/>
+</svg>

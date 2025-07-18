@@ -72,9 +72,18 @@ const Index = () => {
   const [batchEntries, setBatchEntries] = useState<TimeEntry[]>([]);
   const [showBatchApproval, setShowBatchApproval] = useState<boolean>(false);
   const [currentConfig, setCurrentConfig] = useState(CLOCKIFY_CONFIG);
+  const [showConfigWarning, setShowConfigWarning] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
+    // Verificar se há configuração de API key
+    const config = getClockifyConfig();
+    if (!config.API_KEY) {
+      setShowConfigWarning(true);
+      return;
+    }
+    
+    setShowConfigWarning(false);
     loadProjects();
     loadRecentEntries();
     
@@ -82,6 +91,13 @@ const Index = () => {
     const handleConfigUpdate = () => {
       const newConfig = getClockifyConfig();
       setCurrentConfig(newConfig);
+      
+      if (!newConfig.API_KEY) {
+        setShowConfigWarning(true);
+        return;
+      }
+      
+      setShowConfigWarning(false);
       // Recarregar dados com nova configuração
       setTimeout(() => {
         loadProjects();
@@ -398,6 +414,35 @@ const Index = () => {
           </div>
           <p className="text-xl text-gray-600">Automatize o lançamento de horas no Clockify</p>
         </div>
+
+        {showConfigWarning && (
+          <Card className="bg-yellow-50 border-yellow-200 mb-6">
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                  <Clock className="text-yellow-600" size={20} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-yellow-800">Configuração Necessária</h3>
+                  <p className="text-yellow-700 text-sm mt-1">
+                    Para começar a usar o Clockify Automator, você precisa configurar sua API key do Clockify.
+                  </p>
+                  <div className="flex items-center gap-4 mt-3">
+                    <ConfigDialog />
+                    <a 
+                      href="https://clockify.me/user/settings" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-yellow-700 hover:text-yellow-800 underline"
+                    >
+                      Obter API Key →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="tracker" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4 bg-white shadow-sm">

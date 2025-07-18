@@ -1,8 +1,16 @@
 {
-  "name": "vite_react_shadcn_ts",
-  "private": true,
-  "version": "0.0.0",
+  "name": "clockify-automator",
+  "private": false,
+  "version": "1.0.0",
   "type": "module",
+  "description": "Uma interface web moderna para automatizar o lançamento de horas no Clockify",
+  "keywords": ["clockify", "time-tracking", "automation", "react", "typescript"],
+  "author": "Clockify Automator Contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/clockify-automator.git"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
