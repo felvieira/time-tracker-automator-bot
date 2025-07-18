@@ -1,6 +1,23 @@
 # 🕒 Clockify Automator
 
-Uma interface web moderna e intuitiva para automatizar o lançamento de horas no Clockify, desenvolvida com React, TypeScript e shadcn/ui.
+🕒 Automatize o lançamento de horas no Clockify de forma inteligente! 
+
+Cansado de lançar horas dia por dia no Clockify? Este projeto resolve esse problema permitindo lançamento em LOTE para múltiplos dias simultaneamente.
+
+✨ PRINCIPAIS VANTAGENS:
+• 📅 Lançamento em lote - Selecione vários dias e lance horas de uma só vez
+• ⏱️ Timer em tempo real - Controle preciso com start/stop
+• 📊 Interface moderna - Design intuitivo e responsivo
+• 🔄 Automação inteligente - Economize tempo e evite trabalho repetitivo
+• 📈 Relatórios completos - Visualize e gerencie suas horas facilmente
+
+🎯 PROBLEMA RESOLVIDO:
+No Clockify tradicional você precisa lançar horas manualmente, dia por dia, projeto por projeto. Com o Clockify Automator, você seleciona múltiplas datas no calendário, define as horas e descrição, e pronto - todas as entradas são criadas automaticamente!
+
+⚙️ CONFIGURAÇÃO SIMPLES:
+Apenas sua API key do Clockify e você está pronto para usar!
+
+Perfeito para freelancers, consultores e equipes que precisam otimizar o controle de tempo.
 
 ![Clockify Automator](https://img.shields.io/badge/Clockify-Automator-blue?style=for-the-badge&logo=clockify)
 ![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react)
@@ -54,8 +71,8 @@ Uma interface web moderna e intuitiva para automatizar o lançamento de horas no
 
 1. **Clone o repositório**
    ```bash
-   git clone https://github.com/your-username/clockify-automator.git
-   cd clockify-automator
+   git clone https://github.com/felvieira/time-tracker-automator-bot
+   cd time-tracker-automator-bot
    ```
 
 2. **Instale as dependências**
@@ -194,8 +211,8 @@ Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICE
 
 Se você encontrar algum problema ou tiver sugestões:
 
-- Abra uma [Issue](https://github.com/your-username/clockify-automator/issues)
-- Entre em contato via [Discussions](https://github.com/your-username/clockify-automator/discussions)
+- Abra uma [Issue](https://github.com/your-username/time-tracker-automator-bot/issues)
+- Entre em contato via [Discussions](https://github.com/your-username/time-tracker-automator-bot/discussions)
 
 ---
 
